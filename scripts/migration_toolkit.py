@@ -2,9 +2,17 @@
 """
 migration_toolkit.py — один файл для аудита и миграции PHP/Nginx-сайтов.
 
-Загрузка на ВМ и запуск:
-    python3 migration_toolkit.py
-    # или: pip3 install paramiko && python3 migration_toolkit.py
+Куда класть на ВМ (на выбор):
+    /tmp/migration_toolkit.py
+        Временный вариант: после перезагрузки обычно удалится сам.
+    /opt/scripts/migration_toolkit.py
+        Постоянный вариант: оставляете утилиту на сервере.
+
+Запуск:
+    pip3 install --user paramiko   # для SSH в режиме импорта
+    python3 /tmp/migration_toolkit.py
+    # или:
+    python3 /opt/scripts/migration_toolkit.py
 
 Требования безопасности:
     - Snapshot + подтверждение YES перед опасными действиями
@@ -38,7 +46,11 @@ except ImportError:
 # Константы и цвета
 # =============================================================================
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
+
+# Рекомендуемые каталоги размещения скрипта на ВМ
+RECOMMENDED_TMP = Path("/tmp/migration_toolkit.py")
+RECOMMENDED_OPT = Path("/opt/scripts/migration_toolkit.py")
 
 COLOR_RESET = "\033[0m"
 COLOR_BOLD = "\033[1m"
@@ -204,6 +216,56 @@ def setup_logging() -> Path:
 
 def clear_screen() -> None:
     os.system("clear" if os.name != "nt" else "cls")
+
+
+def report_script_location() -> Path:
+    """
+    Показать абсолютный путь скрипта и подсказать про /tmp или /opt/scripts.
+
+    /tmp  — удобно для разовой миграции (часто очищается после reboot).
+    /opt/scripts — если инструмент нужен постоянно.
+    """
+    script_path = Path(__file__).resolve()
+    print_info(f"Скрипт: {script_path}")
+    print_info(f"Рабочая директория: {abs_path_str(Path.cwd())}")
+
+    try:
+        in_tmp = script_path.is_relative_to(Path("/tmp"))
+    except AttributeError:
+        in_tmp = str(script_path).startswith("/tmp/")
+
+    try:
+        in_opt_scripts = script_path.is_relative_to(Path("/opt/scripts"))
+    except AttributeError:
+        in_opt_scripts = str(script_path).startswith("/opt/scripts/")
+
+    if in_tmp:
+        print_ok(
+            "Скрипт лежит в /tmp/ — после перезагрузки ВМ файл обычно "
+            "удалится сам (разовый запуск)."
+        )
+    elif in_opt_scripts:
+        print_ok(
+            "Скрипт лежит в /opt/scripts/ — постоянное размещение, "
+            "после reboot останется на месте."
+        )
+    else:
+        print_warn(
+            "Рекомендуемые пути размещения на ВМ (на ваш выбор):"
+        )
+        print_info(f"  разово:     {RECOMMENDED_TMP}")
+        print_info(f"  постоянно:  {RECOMMENDED_OPT}")
+        print_info(
+            "Пример: sudo mkdir -p /opt/scripts && "
+            "sudo cp migration_toolkit.py /opt/scripts/ "
+            "&& sudo chmod 755 /opt/scripts/migration_toolkit.py"
+        )
+        print_info(
+            "Или: cp migration_toolkit.py /tmp/ && python3 /tmp/migration_toolkit.py"
+        )
+
+    LOGGER.info("Script location: %s", script_path)
+    return script_path
 
 
 # =============================================================================
@@ -1098,8 +1160,7 @@ def main() -> int:
     log_path = setup_logging()
     clear_screen()
     print_ok(f"Лог скрипта: {log_path}")
-    print_info(f"Скрипт: {abs_path_str(Path(__file__))}")
-    print_info(f"Рабочая директория: {abs_path_str(Path.cwd())}")
+    report_script_location()
 
     while True:
         print_menu()

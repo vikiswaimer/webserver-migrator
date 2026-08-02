@@ -20,9 +20,20 @@
 
 ## Скрипт №1 — Bash-аудит
 
+Можно класть рядом с Python-комбайном — в `/tmp/` (разово) или `/opt/scripts/` (постоянно):
+
 ```bash
-chmod +x scripts/server_audit.sh
-sudo ./scripts/server_audit.sh
+# разово (часто удалится после reboot)
+cp scripts/server_audit.sh /tmp/
+chmod +x /tmp/server_audit.sh
+sudo /tmp/server_audit.sh
+
+# постоянно
+sudo mkdir -p /opt/scripts
+sudo cp scripts/server_audit.sh /opt/scripts/
+sudo chmod 755 /opt/scripts/server_audit.sh
+sudo /opt/scripts/server_audit.sh
+
 # лог: /tmp/server_audit_YYYY-MM-DD_HH-MM-SS.log
 ```
 
@@ -30,7 +41,12 @@ sudo ./scripts/server_audit.sh
 
 ## Скрипт №2 — Python-комбайн (один файл)
 
-Загрузите на ВМ один файл `migration_toolkit.py` и запустите:
+Один файл `migration_toolkit.py`. Куда класть на ВМ — на ваш выбор:
+
+| Путь | Когда использовать |
+|------|--------------------|
+| `/tmp/migration_toolkit.py` | Разовая миграция: после перезагрузки обычно удалится сам |
+| `/opt/scripts/migration_toolkit.py` | Если инструмент нужен на сервере постоянно |
 
 ```bash
 # зависимости ОС
@@ -39,11 +55,22 @@ sudo apt-get install -y python3 python3-pip rsync openssh-client
 
 # для режима импорта (SSH-проверки)
 pip3 install --user paramiko
-# или: pip3 install -r requirements.txt
 
-python3 migration_toolkit.py
-# лог: /tmp/migration_process_YYYY-MM-DD_HH-MM-SS.log
+# --- вариант A: /tmp (временный) ---
+cp migration_toolkit.py /tmp/
+chmod +x /tmp/migration_toolkit.py
+python3 /tmp/migration_toolkit.py
+
+# --- вариант B: /opt/scripts (постоянный) ---
+sudo mkdir -p /opt/scripts
+sudo cp migration_toolkit.py /opt/scripts/
+sudo chmod 755 /opt/scripts/migration_toolkit.py
+python3 /opt/scripts/migration_toolkit.py
+
+# лог процесса всегда: /tmp/migration_process_YYYY-MM-DD_HH-MM-SS.log
 ```
+
+При старте скрипт сам показывает абсолютный путь и подсказывает, в каком режиме вы его запустили (`/tmp` или `/opt/scripts`).
 
 ### Меню
 

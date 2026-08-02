@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # server_audit.sh — первичный аудит PHP/Nginx-сервера (bare-metal + Docker)
 # Clean Code: функции, set -euo pipefail, переменные в кавычках
+#
+# Куда класть на ВМ (на выбор):
+#   /tmp/server_audit.sh          — разово; после reboot обычно удалится
+#   /opt/scripts/server_audit.sh  — постоянно
+# Запуск:
+#   sudo /tmp/server_audit.sh
+#   sudo /opt/scripts/server_audit.sh
 
 set -euo pipefail
 
@@ -394,8 +401,21 @@ main() {
   require_snapshot_confirmation
 
   print_header "Старт аудита сервера"
-  print_info "Скрипт: $(absolute_path "${script_dir}/${script_name}")"
+  local script_abs
+  script_abs="$(absolute_path "${script_dir}/${script_name}")"
+  print_info "Скрипт: ${script_abs}"
   print_info "Лог:     ${log_file}"
+  case "${script_abs}" in
+    /tmp/*)
+      print_ok "Скрипт в /tmp/ — после перезагрузки ВМ обычно удалится сам (разовый запуск)."
+      ;;
+    /opt/scripts/*)
+      print_ok "Скрипт в /opt/scripts/ — постоянное размещение, после reboot останется."
+      ;;
+    *)
+      print_warn "Рекомендуемые пути: /tmp/server_audit.sh (разово) или /opt/scripts/server_audit.sh (постоянно)."
+      ;;
+  esac
 
   check_disk_space
   check_docker
