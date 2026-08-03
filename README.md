@@ -8,6 +8,7 @@
 |------|------------|
 | `scripts/server_audit.sh` | Быстрый первичный аудит сервера (Bash) |
 | `scripts/migration_toolkit.py` | **Один файл** — интерактивный комбайн миграции (Python 3) |
+| [`docs/phpinfo-migration-guide.md`](docs/phpinfo-migration-guide.md) | Гайд и чеклист phpinfo: паритет PHP до/после переноса, разбор сбоев |
 
 ## Требования безопасности
 
@@ -85,6 +86,10 @@ python3 /opt/scripts/migration_toolkit.py
 1. На старом сервере: пункт `1` → аудит → Push или tar.gz  
 2. На новом сервере: пункт `2` → Pull → создать недостающие каталоги логов → тест БД  
 3. Пункт `4` для финальной проверки модулей PHP/Nginx
+
+### Дополнительно: phpinfo
+
+Пункт `4` и `php -m` дают быстрый срез. Если нужно **сравнить окружения глубже** (ini-лимиты, CLI ≠ FPM, Docker) или разобрать сбой после cutover — см. [гайд phpinfo при миграции](docs/phpinfo-migration-guide.md) с чеклистом.
 
 ## Важно
 
